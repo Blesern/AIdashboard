@@ -7,7 +7,7 @@ import numpy as np
 from scipy import stats
 
 # Set page title
-st.set_page_config(page_title="Advanced Restaurant Performance Dashboard", layout="wide")
+st.set_page_config(page_title="Enhanced Restaurant Performance Dashboard", layout="wide")
 
 # Load data
 @st.cache_data
@@ -43,7 +43,7 @@ filtered_df = df.loc[mask]
 metrics = st.sidebar.multiselect("Select Metrics for Analysis", ['Labor', 'Food Cost', 'Total Sales', 'Profit'], default=['Total Sales', 'Profit'])
 
 # Main dashboard
-st.title("Advanced Restaurant Performance Dashboard")
+st.title("Enhanced Restaurant Performance Dashboard")
 
 # KPI Cards
 st.subheader("Key Performance Indicators")
@@ -63,16 +63,28 @@ for metric in metrics:
 fig.update_layout(title='Financial Metrics Over Time', xaxis_title='Date', yaxis_title='Amount ($)')
 st.plotly_chart(fig, use_container_width=True)
 
-# Stacked Area Chart
+# New: Bar chart for weekly comparison
+st.subheader("Weekly Comparison")
+metric_for_comparison = st.selectbox("Select Metric for Weekly Comparison", metrics)
+fig_bar = px.bar(filtered_df, x='Date', y=metric_for_comparison, title=f'Weekly {metric_for_comparison} Comparison')
+st.plotly_chart(fig_bar, use_container_width=True)
+
+# Modified: Stacked Bar Chart instead of Area Chart
 st.subheader("Expense Breakdown")
-fig_area = px.area(filtered_df, x='Date', y=['Labor', 'Food Cost'], title='Labor and Food Cost Over Time')
-st.plotly_chart(fig_area, use_container_width=True)
+fig_stacked = px.bar(filtered_df, x='Date', y=['Labor', 'Food Cost'], title='Labor and Food Cost Over Time', barmode='stack')
+st.plotly_chart(fig_stacked, use_container_width=True)
 
 # Pie Chart for average expense distribution
 st.subheader("Average Expense Distribution")
-avg_expenses = filtered_df[['Labor', 'Food Cost']].mean()
-fig_pie = px.pie(values=avg_expenses.values, names=avg_expenses.index, title='Average Expense Distribution')
+avg_expenses = filtered_df[['Labor', 'Food Cost', 'Profit']].mean()
+fig_pie = px.pie(values=avg_expenses.values, names=avg_expenses.index, title='Average Income Distribution')
 st.plotly_chart(fig_pie, use_container_width=True)
+
+# New: Heatmap for correlation between metrics
+st.subheader("Correlation Heatmap")
+correlation_matrix = filtered_df[['Labor', 'Food Cost', 'Total Sales', 'Profit']].corr()
+fig_heatmap = px.imshow(correlation_matrix, text_auto=True, aspect="auto", title="Correlation Between Metrics")
+st.plotly_chart(fig_heatmap, use_container_width=True)
 
 # Advanced Statistical Analysis
 st.subheader("Advanced Statistical Analysis")
@@ -121,6 +133,18 @@ new_profit = new_sales - new_labor - new_food_cost
 st.write(f"Estimated New Profit: ${new_profit:.2f}")
 st.write(f"Current Average Profit: ${filtered_df['Profit'].mean():.2f}")
 st.write(f"Profit Change: ${new_profit - filtered_df['Profit'].mean():.2f}")
+
+# New: Visualize scenario analysis results
+scenario_data = pd.DataFrame({
+    'Category': ['Current', 'New Scenario'],
+    'Profit': [filtered_df['Profit'].mean(), new_profit],
+    'Labor': [filtered_df['Labor'].mean(), new_labor],
+    'Food Cost': [filtered_df['Food Cost'].mean(), new_food_cost],
+    'Total Sales': [filtered_df['Total Sales'].mean(), new_sales]
+})
+
+fig_scenario = px.bar(scenario_data, x='Category', y=['Profit', 'Labor', 'Food Cost'], title='Current vs New Scenario', barmode='group')
+st.plotly_chart(fig_scenario, use_container_width=True)
 
 # Data Download
 st.subheader("Download Data")
